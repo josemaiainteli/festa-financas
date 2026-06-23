@@ -1,0 +1,22 @@
+{
+  "name": "festa-financas-mlg",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Sistema de gestao financeira da Festa Fim de Ferias (MLG) - previsao e realizado de gastos e receitas.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "recharts": "^2.12.7"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "vite": "^5.4.2"
+  }
+}
