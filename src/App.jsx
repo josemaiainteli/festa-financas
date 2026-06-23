@@ -96,8 +96,7 @@ export default function App() {
             <b>Modo local ativo.</b> Os dados estão salvos só neste navegador. Para você, a Malu e a Letícia compartilharem os mesmos números, configure o Supabase (veja o README) e adicione as variáveis na Vercel.
           </div>
         )}
-        {render()}
-        <p className="foot">Festa Fim de Férias · MLG — feito para José, Malu e Letícia 🏖️</p>
+        {render()
       </main>
     </div>
   )
