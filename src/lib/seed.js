@@ -13,12 +13,12 @@ export const SEED_SETTINGS = {
 
 export const SEED_TRANSACTIONS = [
   // ---------- PREVISAO DE GASTOS ----------
-  mk({ type: 'gasto', scenario: 'previsto', category: 'Estrutura', description: 'Aluguel da casa de praia', unit_value: 4700, quantity: 1 }),
+  mk({ type: 'gasto', scenario: 'previsto', category: 'Estrutura', description: 'Aluguel da casa de eventos', unit_value: 4700, quantity: 1 }),
   mk({ type: 'gasto', scenario: 'previsto', category: 'Estrutura', description: 'Som e iluminação (DJ booth + caixas)', unit_value: 1500, quantity: 1 }),
-  mk({ type: 'gasto', scenario: 'previsto', category: 'Estrutura', description: 'Gerador / energia reserva (casa isolada)', unit_value: 600, quantity: 1 }),
+  mk({ type: 'gasto', scenario: 'previsto', category: 'Estrutura', description: 'Gerador / energia reserva', unit_value: 600, quantity: 1 }),
   mk({ type: 'gasto', scenario: 'previsto', category: 'Equipe', description: 'DJs (line-up)', unit_value: 600, quantity: 3 }),
   mk({ type: 'gasto', scenario: 'previsto', category: 'Equipe', description: 'Barmen', unit_value: 350, quantity: 2 }),
-  mk({ type: 'gasto', scenario: 'previsto', category: 'Equipe', description: 'Seguranças (casa isolada)', unit_value: 450, quantity: 3 }),
+  mk({ type: 'gasto', scenario: 'previsto', category: 'Equipe', description: 'Seguranças', unit_value: 450, quantity: 3 }),
   mk({ type: 'gasto', scenario: 'previsto', category: 'Equipe', description: 'Portaria / controle de lista', unit_value: 200, quantity: 2 }),
   mk({ type: 'gasto', scenario: 'previsto', category: 'Equipe', description: 'Limpeza (pré e pós-evento)', unit_value: 300, quantity: 1 }),
   mk({ type: 'gasto', scenario: 'previsto', category: 'Bebidas', description: 'Destilados + mixers (open bar) — por pessoa', unit_value: 22, quantity: 250 }),
@@ -45,4 +45,34 @@ export const SEED_TRANSACTIONS = [
 
   // ---------- RECEITAS CONCRETIZADAS (vendas ja realizadas) ----------
   mk({ type: 'receita', scenario: 'real', category: 'Lote 1 (promo)', description: 'Ingressos vendidos — Lote 1', unit_value: 100, quantity: 38, status: 'recebido', occurred_on: '2026-06-22' }),
+]
+
+/* ----------------- Anotacoes ----------------- */
+// Categorias e notas iniciais. Tudo editavel dentro do app.
+
+export const SEED_NOTE_CATEGORIES = [
+  { id: 'ncat-1', name: 'Fornecedores', color: '#0ea5e9' },
+  { id: 'ncat-2', name: 'Tarefas', color: '#8b5cf6' },
+  { id: 'ncat-3', name: 'Ideias', color: '#fb7185' },
+]
+
+export const SEED_NOTES = [
+  {
+    id: 'note-1',
+    category_id: 'ncat-1',
+    title: 'Casa de eventos (Fortaleza)',
+    body: 'Confirmar valor do aluguel, horário de liberação e regras de som até as 4h. Pedir contato do responsável e fechar a vistoria.',
+  },
+  {
+    id: 'note-2',
+    category_id: 'ncat-2',
+    title: 'Lista de tarefas da semana',
+    body: '• Fechar line-up dos DJs\n• Subir criativos do tráfego\n• Confirmar barmen e seguranças\n• Abrir o Lote 2 quando o Lote 1 chegar a 80%',
+  },
+  {
+    id: 'note-3',
+    category_id: 'ncat-3',
+    title: 'Ideias para a festa',
+    body: 'Cabine de fotos na entrada, drink autoral da MLG e um momento surpresa à meia-noite.',
+  },
 ]

@@ -6,20 +6,31 @@ import DashboardPreditivo from './components/DashboardPreditivo'
 import DashboardReal from './components/DashboardReal'
 import TransactionsTab from './components/TransactionsTab'
 import SettingsTab from './components/SettingsTab'
+import NotesTab from './components/NotesTab'
 
 const TABS = [
-  { id: 'pred', ico: '📊', label: 'Dashboard Preditivo' },
-  { id: 'real', ico: '📈', label: 'Dashboard Real' },
-  { id: 'gasto-prev', ico: '🧾', label: 'Previsão de Gastos' },
-  { id: 'rec-prev', ico: '🎟️', label: 'Previsão de Receitas' },
-  { id: 'gasto-real', ico: '💸', label: 'Gastos Concretizados' },
-  { id: 'rec-real', ico: '💰', label: 'Receitas Concretizadas' },
-  { id: 'config', ico: '⚙️', label: 'Configurações' },
+  { id: 'pred', ico: '📊', label: 'Dashboard Preditivo', group: 'Visão geral' },
+  { id: 'real', ico: '📈', label: 'Dashboard Real', group: 'Visão geral' },
+  { id: 'gasto-prev', ico: '🧾', label: 'Previsão de Gastos', group: 'Planejamento' },
+  { id: 'rec-prev', ico: '🎟️', label: 'Previsão de Receitas', group: 'Planejamento' },
+  { id: 'gasto-real', ico: '💸', label: 'Gastos Concretizados', group: 'Realizado' },
+  { id: 'rec-real', ico: '💰', label: 'Receitas Concretizadas', group: 'Realizado' },
+  { id: 'notas', ico: '📝', label: 'Anotações', group: 'Organização' },
+  { id: 'config', ico: '⚙️', label: 'Configurações', group: 'Organização' },
 ]
+
+// Agrupa as abas preservando a ordem dos grupos.
+const GROUPS = TABS.reduce((acc, t) => {
+  const g = acc.find((x) => x.name === t.group)
+  if (g) g.items.push(t)
+  else acc.push({ name: t.group, items: [t] })
+  return acc
+}, [])
 
 export default function App() {
   const store = useStore()
   const [tab, setTab] = useState('pred')
+  const [navOpen, setNavOpen] = useState(false)
   const m = useMemo(
     () => computeMetrics(store.transactions, store.settings),
     [store.transactions, store.settings],
@@ -53,6 +64,7 @@ export default function App() {
           description="Ingressos efetivamente vendidos. Alimenta o caixa atual e a ocupação no Dashboard Real."
           categories={CATEGORIES_RECEITA} />
       )
+      case 'notas': return <NotesTab store={store} />
       case 'config': return <SettingsTab store={store} m={m} />
       default: return null
     }
@@ -60,44 +72,75 @@ export default function App() {
 
   if (store.loading) return <div className="loading">Carregando dados…</div>
 
+  const goTo = (id) => { setTab(id); setNavOpen(false) }
+  const activeLabel = TABS.find((t) => t.id === tab)?.label
+
   return (
-    <div className="app">
-      <header className="topbar">
-        <div>
-          <h1>{store.settings.event_name || 'Festa Fim de Férias · MLG'}</h1>
-          <div className="sub">Sistema de gestão financeira · {dateBR(store.settings.event_date)}</div>
+    <div className="shell">
+      {/* Fundo ambiente (liquid glass) */}
+      <div className="aurora" aria-hidden="true">
+        <span className="orb orb-1" />
+        <span className="orb orb-2" />
+        <span className="orb orb-3" />
+      </div>
+
+      {navOpen && <div className="scrim" onClick={() => setNavOpen(false)} aria-hidden="true" />}
+
+      <aside className={`sidebar glass ${navOpen ? 'open' : ''}`}>
+        <div className="brand">
+          <div className="brand-mark">MLG</div>
+          <div className="brand-text">
+            <strong>{store.settings.event_name || 'Festa Fim de Férias · MLG'}</strong>
+            <span>{dateBR(store.settings.event_date)} · Fortaleza</span>
+          </div>
         </div>
-        <div className="meta">
-          <span className={`badge-mode`} title={store.mode === 'cloud' ? 'Conectado ao Supabase (dados compartilhados)' : 'Modo local: dados salvos só neste navegador'}>
+
+        <nav className="nav">
+          {GROUPS.map((g) => (
+            <div className="nav-group" key={g.name}>
+              <div className="nav-group-label">{g.name}</div>
+              {g.items.map((t) => (
+                <button
+                  key={t.id}
+                  className={`nav-item ${tab === t.id ? 'active' : ''}`}
+                  onClick={() => goTo(t.id)}
+                >
+                  <span className="nav-ico">{t.ico}</span>
+                  <span className="nav-label">{t.label}</span>
+                </button>
+              ))}
+            </div>
+          ))}
+        </nav>
+
+        <div className="sidebar-foot">
+          <span className="badge-mode" title={store.mode === 'cloud' ? 'Conectado ao Supabase (dados compartilhados)' : 'Modo local: dados salvos só neste navegador'}>
             <span className={`dot ${store.mode === 'cloud' ? 'cloud' : 'local'}`} />
-            {store.mode === 'cloud' ? 'Nuvem (compartilhado)' : 'Local (este navegador)'}
+            {store.mode === 'cloud' ? 'Nuvem · compartilhado' : 'Local · este navegador'}
           </span>
-          <div style={{ marginTop: 8 }}>
-            <button className="btn sm" onClick={store.refresh}>↻ Atualizar</button>
-          </div>
+          <button className="btn sm ghost" onClick={store.refresh}>↻ Atualizar</button>
         </div>
-      </header>
+      </aside>
 
-      <nav className="tabs">
-        {TABS.map((t) => (
-          <button key={t.id} className={`tab ${tab === t.id ? 'active' : ''}`} onClick={() => setTab(t.id)}>
-            <span className="tab-ico">{t.ico}</span>
-            <span className={t.id.startsWith('dashboard') ? '' : ''}>{t.label}</span>
-          </button>
-        ))}
-      </nav>
+      <div className="main">
+        <header className="topbar glass">
+          <button className="hamburger" onClick={() => setNavOpen(true)} aria-label="Abrir menu">☰</button>
+          <h1>{activeLabel}</h1>
+          <span className="topbar-spacer" />
+        </header>
 
-      <main className="content">
-        {store.error && (
-          <div className="note"><b>Atenção:</b> {store.error} — verifique as variáveis do Supabase na Vercel. O app continua funcionando com os últimos dados carregados.</div>
-        )}
-        {store.mode === 'local' && (
-          <div className="note">
-            <b>Modo local ativo.</b> Os dados estão salvos só neste navegador. Para você, a Malu e a Letícia compartilharem os mesmos números, configure o Supabase (veja o README) e adicione as variáveis na Vercel.
-          </div>
-        )}
-        {render()}
-      </main>
+        <main className="content">
+          {store.error && (
+            <div className="note"><b>Atenção:</b> {store.error} — verifique as variáveis do Supabase na Vercel. O app continua funcionando com os últimos dados carregados.</div>
+          )}
+          {store.mode === 'local' && (
+            <div className="note">
+              <b>Modo local ativo.</b> Os dados estão salvos só neste navegador. Para você, a Malu e a Letícia compartilharem os mesmos números, configure o Supabase (veja o README) e adicione as variáveis na Vercel.
+            </div>
+          )}
+          {render()}
+        </main>
+      </div>
     </div>
   )
 }

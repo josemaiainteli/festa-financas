@@ -1,6 +1,6 @@
-# 🏖️ Festa Fim de Férias · MLG — Sistema de Finanças
+# 🌴 Festa Fim de Férias · MLG — Sistema de Finanças
 
-App web para a **José, Malu e Letícia** controlarem as finanças da festa: previsão x realizado de gastos e receitas, com dashboards para os dois cenários e cálculo automático da margem de lucro (meta de 30%).
+App web para a **José, Malu e Letícia** controlarem as finanças da festa (casa de eventos em Fortaleza): previsão x realizado de gastos e receitas, com dashboards para os dois cenários, anotações por categoria e cálculo automático da margem de lucro (meta de 30%).
 
 Stack: **React + Vite**, gráficos com **Recharts**, dados no **Supabase** (com fallback automático para `localStorage` enquanto o Supabase não estiver configurado).
 
@@ -16,6 +16,7 @@ Stack: **React + Vite**, gráficos com **Recharts**, dados no **Supabase** (com 
 | **Previsão de Receitas** | Ingressos all-inclusive por lote (preço × quantidade). |
 | **Gastos Concretizados** | Despesas que já saíram, com data e status (pago/pendente). |
 | **Receitas Concretizadas** | Ingressos efetivamente vendidos. |
+| **Anotações** | Categorias livres (fornecedores, tarefas, ideias) com notas dentro de cada uma. |
 | **Configurações** | Capacidade (250), meta de margem (30%), nome e data do evento. |
 
 Todos os números vêm pré-preenchidos com **estimativas** (aluguel R$ 4.700, seguranças, DJs, barmen, soft drinks etc.) — é só ajustar.
