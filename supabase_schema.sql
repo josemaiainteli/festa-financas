@@ -84,7 +84,7 @@ insert into public.transactions (type, scenario, category, description, unit_val
 ('gasto','previsto','Estrutura','Aluguel da casa de eventos',4700,1),
 ('gasto','previsto','Estrutura','Som e iluminação (DJ booth + caixas)',1500,1),
 ('gasto','previsto','Estrutura','Gerador / energia reserva',600,1),
-('gasto','previsto','Equipe','DJs (line-up)',600,3),
+('gasto','previsto','Atrações','DJs (line-up)',600,3),
 ('gasto','previsto','Equipe','Barmen',350,2),
 ('gasto','previsto','Equipe','Seguranças',450,3),
 ('gasto','previsto','Equipe','Portaria / controle de lista',200,2),

@@ -85,5 +85,5 @@ export function computeMetrics(txs, settings) {
   }
 }
 
-export const CATEGORIES_GASTO = ['Estrutura', 'Equipe', 'Bebidas', 'Marketing', 'Operação', 'Outros']
+export const CATEGORIES_GASTO = ['Estrutura', 'Equipe', 'Atrações', 'Bebidas', 'Marketing', 'Operação', 'Outros']
 export const CATEGORIES_RECEITA = ['Lote 1 (promo)', 'Lote 2', 'Lote 3', 'Porta', 'Outros']

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 const PALETTE = ['#0ea5e9', '#8b5cf6', '#fb7185', '#22c55e', '#f59e0b', '#14b8a6']
 
-function NoteCard({ note, onChange, onDelete }) {
+function NoteCard({ note, onChange, onDelete, onExpand }) {
   const [draft, setDraft] = useState(note)
   useEffect(() => { setDraft(note) }, [note.id])
 
@@ -28,6 +28,9 @@ function NoteCard({ note, onChange, onDelete }) {
         onBlur={(e) => commit('body', e.target.value)}
       />
       <div className="note-foot">
+        <button className="icon-btn" title="Abrir em tela cheia" onClick={() => onExpand(note.id)}>
+          ⛶ Tela cheia
+        </button>
         <button className="icon-btn danger" title="Excluir anotação" onClick={() => onDelete(note.id)}>
           Excluir
         </button>
@@ -36,11 +39,55 @@ function NoteCard({ note, onChange, onDelete }) {
   )
 }
 
+function FullNote({ note, onChange, onClose }) {
+  const [draft, setDraft] = useState(note)
+  useEffect(() => { setDraft(note) }, [note.id])
+
+  // Fecha com Esc e trava o scroll do fundo enquanto aberto.
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    const prev = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = prev }
+  }, [onClose])
+
+  const commit = (k, v) => { if (v !== note[k]) onChange(note.id, { [k]: v }) }
+
+  return (
+    <div className="note-overlay" onClick={onClose}>
+      <div className="note-full glass" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+        <div className="note-full-head">
+          <input
+            className="note-full-title"
+            placeholder="Título da anotação"
+            value={draft.title || ''}
+            onChange={(e) => setDraft((d) => ({ ...d, title: e.target.value }))}
+            onBlur={(e) => commit('title', e.target.value)}
+          />
+          <button className="icon-btn" title="Fechar (Esc)" onClick={onClose}>✕ Fechar</button>
+        </div>
+        <textarea
+          className="note-full-body"
+          placeholder="Escreva aqui…"
+          autoFocus
+          value={draft.body || ''}
+          onChange={(e) => setDraft((d) => ({ ...d, body: e.target.value }))}
+          onBlur={(e) => commit('body', e.target.value)}
+        />
+      </div>
+    </div>
+  )
+}
+
 export default function NotesTab({ store }) {
   const { noteCategories, notes } = store
   const [activeId, setActiveId] = useState(noteCategories[0]?.id || null)
+  const [fullId, setFullId] = useState(null)
   const nameRef = useRef(null)
   const justAdded = useRef(false)
+
+  const fullNote = notes.find((n) => n.id === fullId) || null
 
   // Mantém uma categoria válida selecionada quando a lista muda.
   useEffect(() => {
@@ -157,6 +204,7 @@ export default function NotesTab({ store }) {
                     note={n}
                     onChange={store.updateNote}
                     onDelete={store.deleteNote}
+                    onExpand={setFullId}
                   />
                 ))}
                 <button className="add-note glass" onClick={() => store.addNote(active.id)}>
@@ -167,6 +215,10 @@ export default function NotesTab({ store }) {
             </section>
           )}
         </div>
+      )}
+
+      {fullNote && (
+        <FullNote note={fullNote} onChange={store.updateNote} onClose={() => setFullId(null)} />
       )}
     </div>
   )

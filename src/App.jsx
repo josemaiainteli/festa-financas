@@ -31,6 +31,14 @@ export default function App() {
   const store = useStore()
   const [tab, setTab] = useState('pred')
   const [navOpen, setNavOpen] = useState(false)
+  const [collapsed, setCollapsed] = useState(() => {
+    try { return localStorage.getItem('mlg_sidebar_collapsed') === '1' } catch { return false }
+  })
+  const toggleCollapsed = () => setCollapsed((c) => {
+    const next = !c
+    try { localStorage.setItem('mlg_sidebar_collapsed', next ? '1' : '0') } catch { /* ignore */ }
+    return next
+  })
   const m = useMemo(
     () => computeMetrics(store.transactions, store.settings),
     [store.transactions, store.settings],
@@ -76,7 +84,7 @@ export default function App() {
   const activeLabel = TABS.find((t) => t.id === tab)?.label
 
   return (
-    <div className="shell">
+    <div className={`shell ${collapsed ? 'collapsed' : ''}`}>
       {/* Fundo ambiente (liquid glass) */}
       <div className="aurora" aria-hidden="true">
         <span className="orb orb-1" />
@@ -86,7 +94,16 @@ export default function App() {
 
       {navOpen && <div className="scrim" onClick={() => setNavOpen(false)} aria-hidden="true" />}
 
-      <aside className={`sidebar glass ${navOpen ? 'open' : ''}`}>
+      <aside className={`sidebar glass ${navOpen ? 'open' : ''} ${collapsed ? 'collapsed' : ''}`}>
+        <button
+          className="collapse-btn"
+          onClick={toggleCollapsed}
+          title={collapsed ? 'Expandir menu' : 'Recolher menu'}
+          aria-label={collapsed ? 'Expandir menu' : 'Recolher menu'}
+        >
+          {collapsed ? '»' : '«'}
+        </button>
+
         <div className="brand">
           <div className="brand-mark">MLG</div>
           <div className="brand-text">
@@ -104,6 +121,7 @@ export default function App() {
                   key={t.id}
                   className={`nav-item ${tab === t.id ? 'active' : ''}`}
                   onClick={() => goTo(t.id)}
+                  title={t.label}
                 >
                   <span className="nav-ico">{t.ico}</span>
                   <span className="nav-label">{t.label}</span>
@@ -116,9 +134,11 @@ export default function App() {
         <div className="sidebar-foot">
           <span className="badge-mode" title={store.mode === 'cloud' ? 'Conectado ao Supabase (dados compartilhados)' : 'Modo local: dados salvos só neste navegador'}>
             <span className={`dot ${store.mode === 'cloud' ? 'cloud' : 'local'}`} />
-            {store.mode === 'cloud' ? 'Nuvem · compartilhado' : 'Local · este navegador'}
+            <span className="badge-text">{store.mode === 'cloud' ? 'Nuvem · compartilhado' : 'Local · este navegador'}</span>
           </span>
-          <button className="btn sm ghost" onClick={store.refresh}>↻ Atualizar</button>
+          <button className="btn sm ghost" onClick={store.refresh} title="Atualizar dados">
+            <span className="refresh-ico">↻</span><span className="refresh-text"> Atualizar</span>
+          </button>
         </div>
       </aside>
 

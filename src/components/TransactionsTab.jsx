@@ -1,6 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { computeAmount } from '../lib/finance'
 import { money, todayISO } from '../lib/format'
+
+const SORT_OPTIONS = [
+  { key: 'added', label: 'Ordem de adição' },
+  { key: 'value', label: 'Valor' },
+  { key: 'category', label: 'Categoria' },
+  { key: 'alpha', label: 'Ordem alfabética' },
+]
 
 function EditableRow({ tx, isReal, isReceita, categories, onChange, onDelete }) {
   const [draft, setDraft] = useState(tx)
@@ -94,9 +101,50 @@ function EditableRow({ tx, isReal, isReceita, categories, onChange, onDelete }) 
 export default function TransactionsTab({ store, type, scenario, title, description, categories }) {
   const isReal = scenario === 'real'
   const isReceita = type === 'receita'
-  const rows = store.transactions.filter((t) => t.type === type && t.scenario === scenario)
-  const total = rows.reduce((a, t) => a + computeAmount(t), 0)
-  const qtdTotal = rows.reduce((a, t) => a + (Number(t.quantity) || 0), 0)
+
+  const [query, setQuery] = useState('')
+  const [catFilter, setCatFilter] = useState('')
+  const [sortKey, setSortKey] = useState('added')
+  const [sortDir, setSortDir] = useState('asc')
+
+  // Linhas deste tipo/cenário, na ordem original (= ordem de adição).
+  const rows = useMemo(
+    () => store.transactions
+      .filter((t) => t.type === type && t.scenario === scenario)
+      .map((t, idx) => ({ ...t, _idx: idx })),
+    [store.transactions, type, scenario],
+  )
+
+  // Categorias disponíveis no filtro: as padrão + as que já existem nos dados.
+  const filterCategories = useMemo(() => {
+    const set = new Set(categories)
+    rows.forEach((t) => { if (t.category) set.add(t.category) })
+    return [...set]
+  }, [categories, rows])
+
+  // Aplica busca, filtro de categoria e ordenação (sem alterar os dados).
+  const visible = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    let out = rows.filter((t) => {
+      const matchQ = !q || (t.description || '').toLowerCase().includes(q)
+      const matchCat = !catFilter || t.category === catFilter
+      return matchQ && matchCat
+    })
+    const dir = sortDir === 'asc' ? 1 : -1
+    out = [...out].sort((a, b) => {
+      switch (sortKey) {
+        case 'value': return (computeAmount(a) - computeAmount(b)) * dir
+        case 'category': return (a.category || '').localeCompare(b.category || '', 'pt') * dir
+        case 'alpha': return (a.description || '').localeCompare(b.description || '', 'pt') * dir
+        default: return (a._idx - b._idx) * dir
+      }
+    })
+    return out
+  }, [rows, query, catFilter, sortKey, sortDir])
+
+  const isFiltered = query.trim() !== '' || catFilter !== ''
+  const total = visible.reduce((a, t) => a + computeAmount(t), 0)
+  const qtdTotal = visible.reduce((a, t) => a + (Number(t.quantity) || 0), 0)
 
   const add = () => store.addTx({
     type, scenario,
@@ -126,13 +174,52 @@ export default function TransactionsTab({ store, type, scenario, title, descript
           <div className="sum">
             {isReceita
               ? <>Ingressos: <b>{qtdTotal}</b> &nbsp;·&nbsp; Receita: <b>{money(total)}</b></>
-              : <>Itens: <b>{rows.length}</b> &nbsp;·&nbsp; Total: <b>{money(total)}</b></>}
+              : <>Itens: <b>{visible.length}</b>{isFiltered ? ` de ${rows.length}` : ''} &nbsp;·&nbsp; Total: <b>{money(total)}</b></>}
+            {isFiltered && <span className="filtered-tag">filtrado</span>}
           </div>
           <button className="btn sm" onClick={add}>+ Linha</button>
         </div>
 
+        {rows.length > 0 && (
+          <div className="table-controls">
+            <input
+              className="ctrl-search"
+              type="search"
+              placeholder="Buscar por descrição…"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            <select
+              className="ctrl-select"
+              value={catFilter}
+              onChange={(e) => setCatFilter(e.target.value)}
+              aria-label="Filtrar por categoria"
+            >
+              <option value="">Todas as categorias</option>
+              {filterCategories.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+            <select
+              className="ctrl-select"
+              value={sortKey}
+              onChange={(e) => setSortKey(e.target.value)}
+              aria-label="Ordenar por"
+            >
+              {SORT_OPTIONS.map((o) => <option key={o.key} value={o.key}>Ordenar: {o.label}</option>)}
+            </select>
+            <button
+              className="ctrl-dir"
+              onClick={() => setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))}
+              title={sortDir === 'asc' ? 'Crescente' : 'Decrescente'}
+            >
+              {sortDir === 'asc' ? '↑' : '↓'}
+            </button>
+          </div>
+        )}
+
         {rows.length === 0 ? (
           <div className="empty">Nenhum lançamento ainda. Clique em “Adicionar linha”.</div>
+        ) : visible.length === 0 ? (
+          <div className="empty">Nenhum resultado para os filtros atuais.</div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
             <table>
@@ -149,7 +236,7 @@ export default function TransactionsTab({ store, type, scenario, title, descript
                 </tr>
               </thead>
               <tbody>
-                {rows.map((t) => (
+                {visible.map((t) => (
                   <EditableRow
                     key={t.id}
                     tx={t}

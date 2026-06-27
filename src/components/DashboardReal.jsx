@@ -4,6 +4,7 @@ import {
   PieChart, Pie, Cell,
 } from 'recharts'
 import KpiCard from './KpiCard'
+import PieTooltip from './PieTooltip'
 import { money, moneyShort, pct } from '../lib/format'
 
 const COLORS = ['#0ea5e9', '#6366f1', '#f43f5e', '#f59e0b', '#10b981', '#8b5cf6', '#64748b']
@@ -70,7 +71,7 @@ export default function DashboardReal({ m }) {
                   <Pie data={m.gastosReaisPorCategoria} dataKey="total" nameKey="category" innerRadius={55} outerRadius={95} paddingAngle={2}>
                     {m.gastosReaisPorCategoria.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                   </Pie>
-                  <Tooltip formatter={(v) => money(v)} />
+                  <Tooltip content={<PieTooltip total={m.custoReal} />} />
                 </PieChart>
               </ResponsiveContainer>
               <div className="legend">

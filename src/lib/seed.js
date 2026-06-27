@@ -16,7 +16,7 @@ export const SEED_TRANSACTIONS = [
   mk({ type: 'gasto', scenario: 'previsto', category: 'Estrutura', description: 'Aluguel da casa de eventos', unit_value: 4700, quantity: 1 }),
   mk({ type: 'gasto', scenario: 'previsto', category: 'Estrutura', description: 'Som e iluminação (DJ booth + caixas)', unit_value: 1500, quantity: 1 }),
   mk({ type: 'gasto', scenario: 'previsto', category: 'Estrutura', description: 'Gerador / energia reserva', unit_value: 600, quantity: 1 }),
-  mk({ type: 'gasto', scenario: 'previsto', category: 'Equipe', description: 'DJs (line-up)', unit_value: 600, quantity: 3 }),
+  mk({ type: 'gasto', scenario: 'previsto', category: 'Atrações', description: 'DJs (line-up)', unit_value: 600, quantity: 3 }),
   mk({ type: 'gasto', scenario: 'previsto', category: 'Equipe', description: 'Barmen', unit_value: 350, quantity: 2 }),
   mk({ type: 'gasto', scenario: 'previsto', category: 'Equipe', description: 'Seguranças', unit_value: 450, quantity: 3 }),
   mk({ type: 'gasto', scenario: 'previsto', category: 'Equipe', description: 'Portaria / controle de lista', unit_value: 200, quantity: 2 }),
