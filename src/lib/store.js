@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase, isCloud } from './supabase'
 import {
-  SEED_TRANSACTIONS, SEED_SETTINGS, SEED_NOTE_CATEGORIES, SEED_NOTES,
+  SEED_TRANSACTIONS, SEED_SETTINGS, SEED_NOTE_CATEGORIES, SEED_NOTES, SEED_DRINKS,
 } from './seed'
 
 const LS_TX = 'mlg_transactions_v1'
 const LS_SET = 'mlg_settings_v1'
 const LS_NCAT = 'mlg_note_categories_v1'
 const LS_NOTE = 'mlg_notes_v1'
+const LS_DRINK = 'mlg_drinks_v1'
 
 const uid = () =>
   (crypto?.randomUUID ? crypto.randomUUID() : `id-${Date.now()}-${Math.random().toString(16).slice(2)}`)
@@ -32,6 +33,12 @@ const notePayload = (n) => ({
   title: n.title ?? '',
   body: n.body ?? '',
 })
+const drinkPayload = (d) => ({
+  name: d.name ?? '',
+  unit_cost: Number(d.unit_cost) || 0,
+  sale_price: Number(d.sale_price) || 0,
+  expected_qty: Number(d.expected_qty) || 0,
+})
 
 /* ----------------- localStorage backend ----------------- */
 const local = {
@@ -40,10 +47,12 @@ const local = {
     let settings = null
     let noteCats = null
     let notes = null
+    let drinks = null
     try { txs = JSON.parse(localStorage.getItem(LS_TX)) } catch { /* ignore */ }
     try { settings = JSON.parse(localStorage.getItem(LS_SET)) } catch { /* ignore */ }
     try { noteCats = JSON.parse(localStorage.getItem(LS_NCAT)) } catch { /* ignore */ }
     try { notes = JSON.parse(localStorage.getItem(LS_NOTE)) } catch { /* ignore */ }
+    try { drinks = JSON.parse(localStorage.getItem(LS_DRINK)) } catch { /* ignore */ }
     if (!Array.isArray(txs)) {
       txs = SEED_TRANSACTIONS.map((t) => ({ ...t }))
       localStorage.setItem(LS_TX, JSON.stringify(txs))
@@ -60,12 +69,17 @@ const local = {
       notes = SEED_NOTES.map((n) => ({ ...n }))
       localStorage.setItem(LS_NOTE, JSON.stringify(notes))
     }
-    return { txs, settings, noteCats, notes }
+    if (!Array.isArray(drinks)) {
+      drinks = SEED_DRINKS.map((d) => ({ ...d }))
+      localStorage.setItem(LS_DRINK, JSON.stringify(drinks))
+    }
+    return { txs, settings, noteCats, notes, drinks }
   },
   saveTx(txs) { localStorage.setItem(LS_TX, JSON.stringify(txs)) },
   saveSettings(s) { localStorage.setItem(LS_SET, JSON.stringify(s)) },
   saveNoteCats(c) { localStorage.setItem(LS_NCAT, JSON.stringify(c)) },
   saveNotes(n) { localStorage.setItem(LS_NOTE, JSON.stringify(n)) },
+  saveDrinks(d) { localStorage.setItem(LS_DRINK, JSON.stringify(d)) },
 }
 
 /* ----------------- hook ----------------- */
@@ -74,6 +88,7 @@ export function useStore() {
   const [settings, setSettings] = useState(SEED_SETTINGS)
   const [noteCategories, setNoteCategories] = useState([])
   const [notes, setNotes] = useState([])
+  const [drinks, setDrinks] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const txRef = useRef([])
@@ -82,15 +97,18 @@ export function useStore() {
   catRef.current = noteCategories
   const noteRef = useRef([])
   noteRef.current = notes
+  const drinkRef = useRef([])
+  drinkRef.current = drinks
 
   const refresh = useCallback(async () => {
     setError(null)
     if (!isCloud) {
-      const { txs, settings, noteCats, notes } = local.load()
+      const { txs, settings, noteCats, notes, drinks } = local.load()
       setTransactions(txs)
       setSettings(settings)
       setNoteCategories(noteCats)
       setNotes(notes)
+      setDrinks(drinks)
       setLoading(false)
       return
     }
@@ -100,17 +118,20 @@ export function useStore() {
         { data: setRows, error: e2 },
         { data: catRows, error: e3 },
         { data: noteRows, error: e4 },
+        { data: drinkRows, error: e5 },
       ] = await Promise.all([
         supabase.from('transactions').select('*').order('created_at', { ascending: true }),
         supabase.from('settings').select('*').eq('id', 1).maybeSingle(),
         supabase.from('note_categories').select('*').order('created_at', { ascending: true }),
         supabase.from('notes').select('*').order('created_at', { ascending: true }),
+        supabase.from('drinks').select('*').order('created_at', { ascending: true }),
       ])
       if (e1) throw e1
       if (e2) throw e2
-      // Anotacoes sao opcionais: se as tabelas ainda nao existirem, nao quebra o app.
+      // Anotacoes e bar sao opcionais: se as tabelas ainda nao existirem, nao quebra o app.
       if (!e3) setNoteCategories(catRows || [])
       if (!e4) setNotes(noteRows || [])
+      if (!e5) setDrinks(drinkRows || [])
       setTransactions(txs || [])
       setSettings(setRows || SEED_SETTINGS)
     } catch (err) {
@@ -250,12 +271,48 @@ export function useStore() {
     if (error) setError(error.message)
   }, [])
 
+  /* ----------------- Bar / drinks ----------------- */
+  const addDrink = useCallback(async (partial = {}) => {
+    const base = { name: '', unit_cost: 0, sale_price: 0, expected_qty: 0, ...partial }
+    if (!isCloud) {
+      const row = { ...base, id: uid(), created_at: new Date().toISOString() }
+      const next = [...drinkRef.current, row]
+      setDrinks(next); local.saveDrinks(next)
+      return row
+    }
+    const { data, error } = await supabase.from('drinks').insert(drinkPayload(base)).select().single()
+    if (error) { setError(error.message); return null }
+    setDrinks((prev) => [...prev, data])
+    return data
+  }, [])
+
+  const updateDrink = useCallback(async (id, patch) => {
+    setDrinks((prev) => prev.map((d) => (d.id === id ? { ...d, ...patch } : d)))
+    if (!isCloud) {
+      const next = drinkRef.current.map((d) => (d.id === id ? { ...d, ...patch } : d))
+      local.saveDrinks(next)
+      return
+    }
+    const merged = { ...drinkRef.current.find((d) => d.id === id), ...patch }
+    const { error } = await supabase.from('drinks').update(drinkPayload(merged)).eq('id', id)
+    if (error) setError(error.message)
+  }, [])
+
+  const deleteDrink = useCallback(async (id) => {
+    const next = drinkRef.current.filter((d) => d.id !== id)
+    setDrinks(next)
+    if (!isCloud) { local.saveDrinks(next); return }
+    const { error } = await supabase.from('drinks').delete().eq('id', id)
+    if (error) setError(error.message)
+  }, [])
+
   return {
     loading, error, mode: isCloud ? 'cloud' : 'local',
     transactions, settings,
-    noteCategories, notes,
+    noteCategories, notes, drinks,
     addTx, updateTx, deleteTx, updateSettings, refresh,
     addCategory, updateCategory, deleteCategory,
     addNote, updateNote, deleteNote,
+    addDrink, updateDrink, deleteDrink,
   }
 }

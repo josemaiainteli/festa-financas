@@ -7,12 +7,14 @@ import DashboardReal from './components/DashboardReal'
 import TransactionsTab from './components/TransactionsTab'
 import SettingsTab from './components/SettingsTab'
 import NotesTab from './components/NotesTab'
+import BarTab from './components/BarTab'
 
 const TABS = [
   { id: 'pred', ico: '📊', label: 'Dashboard Preditivo', group: 'Visão geral' },
   { id: 'real', ico: '📈', label: 'Dashboard Real', group: 'Visão geral' },
   { id: 'gasto-prev', ico: '🧾', label: 'Previsão de Gastos', group: 'Planejamento' },
   { id: 'rec-prev', ico: '🎟️', label: 'Previsão de Receitas', group: 'Planejamento' },
+  { id: 'bar', ico: '🍸', label: 'Bar · cenários', group: 'Planejamento' },
   { id: 'gasto-real', ico: '💸', label: 'Gastos Concretizados', group: 'Realizado' },
   { id: 'rec-real', ico: '💰', label: 'Receitas Concretizadas', group: 'Realizado' },
   { id: 'notas', ico: '📝', label: 'Anotações', group: 'Organização' },
@@ -72,6 +74,7 @@ export default function App() {
           description="Ingressos efetivamente vendidos. Alimenta o caixa atual e a ocupação no Dashboard Real."
           categories={CATEGORIES_RECEITA} />
       )
+      case 'bar': return <BarTab store={store} m={m} />
       case 'notas': return <NotesTab store={store} />
       case 'config': return <SettingsTab store={store} m={m} />
       default: return null

@@ -10,8 +10,17 @@ create table if not exists public.settings (
   event_date    date,
   capacity      int    not null default 250,
   margin_target numeric not null default 30,
+  -- Parametros de planejamento do bar (comparacao de cenarios)
+  bar_entry_price      numeric not null default 0,
+  openbar_company_cost numeric not null default 0,
+  bar_barman_cost      numeric not null default 0,
   constraint settings_single_row check (id = 1)
 );
+
+-- Para bancos ja existentes: adiciona as colunas do bar (aditivo e seguro).
+alter table public.settings add column if not exists bar_entry_price      numeric not null default 0;
+alter table public.settings add column if not exists openbar_company_cost numeric not null default 0;
+alter table public.settings add column if not exists bar_barman_cost      numeric not null default 0;
 
 -- ---------- Tabela de transacoes ----------
 create table if not exists public.transactions (
@@ -50,6 +59,16 @@ create table if not exists public.notes (
 
 create index if not exists idx_notes_category on public.notes (category_id);
 
+-- ---------- Bar: cardapio de drinks ----------
+create table if not exists public.drinks (
+  id           uuid primary key default gen_random_uuid(),
+  name         text not null default '',
+  unit_cost    numeric not null default 0,
+  sale_price   numeric not null default 0,
+  expected_qty numeric not null default 0,
+  created_at   timestamptz not null default now()
+);
+
 -- ---------- Row Level Security ----------
 -- App pequeno e privado: liberamos leitura/escrita para a chave anon.
 -- (Quem tiver o link + a anon key pode editar. Suficiente para 3 organizadoras.)
@@ -57,6 +76,7 @@ alter table public.settings        enable row level security;
 alter table public.transactions    enable row level security;
 alter table public.note_categories enable row level security;
 alter table public.notes           enable row level security;
+alter table public.drinks          enable row level security;
 
 drop policy if exists "anon full settings" on public.settings;
 create policy "anon full settings" on public.settings
@@ -72,6 +92,10 @@ create policy "anon full note_categories" on public.note_categories
 
 drop policy if exists "anon full notes" on public.notes;
 create policy "anon full notes" on public.notes
+  for all using (true) with check (true);
+
+drop policy if exists "anon full drinks" on public.drinks;
+create policy "anon full drinks" on public.drinks
   for all using (true) with check (true);
 
 -- ---------- Dados iniciais ----------
@@ -138,3 +162,11 @@ select id,
     else 'Cabine de fotos na entrada, drink autoral da MLG e um momento surpresa à meia-noite.'
   end
 from seed_cats;
+
+-- ---------- Bar: drinks iniciais (exemplos) ----------
+insert into public.drinks (name, unit_cost, sale_price, expected_qty) values
+('Caipirinha', 6, 18, 200),
+('Gin tônica', 8, 22, 180),
+('Cerveja (long neck)', 5, 12, 300),
+('Drink autoral MLG', 9, 25, 120),
+('Refrigerante / não alcoólico', 3, 8, 100);

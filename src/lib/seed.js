@@ -9,6 +9,9 @@ export const SEED_SETTINGS = {
   event_date: '2026-07-25',
   capacity: 250,
   margin_target: 30, // % minimo de lucro sobre o custo total
+  bar_entry_price: 0,       // preco do ingresso so-entrada (Cenario B)
+  openbar_company_cost: 0,  // taxa da empresa de open bar (so Cenario A)
+  bar_barman_cost: 0,       // barman de producao do bar (so Cenario B)
 }
 
 export const SEED_TRANSACTIONS = [
@@ -54,6 +57,16 @@ export const SEED_NOTE_CATEGORIES = [
   { id: 'ncat-1', name: 'Fornecedores', color: '#0ea5e9' },
   { id: 'ncat-2', name: 'Tarefas', color: '#8b5cf6' },
   { id: 'ncat-3', name: 'Ideias', color: '#fb7185' },
+]
+
+/* ----------------- Bar / cardapio de drinks ----------------- */
+// Exemplos so para instalacoes novas. unit_cost = insumos; sale_price = venda.
+export const SEED_DRINKS = [
+  { id: 'drink-1', name: 'Caipirinha', unit_cost: 6, sale_price: 18, expected_qty: 200 },
+  { id: 'drink-2', name: 'Gin tônica', unit_cost: 8, sale_price: 22, expected_qty: 180 },
+  { id: 'drink-3', name: 'Cerveja (long neck)', unit_cost: 5, sale_price: 12, expected_qty: 300 },
+  { id: 'drink-4', name: 'Drink autoral MLG', unit_cost: 9, sale_price: 25, expected_qty: 120 },
+  { id: 'drink-5', name: 'Refrigerante / não alcoólico', unit_cost: 3, sale_price: 8, expected_qty: 100 },
 ]
 
 export const SEED_NOTES = [

@@ -87,3 +87,59 @@ export function computeMetrics(txs, settings) {
 
 export const CATEGORIES_GASTO = ['Estrutura', 'Equipe', 'Atrações', 'Bebidas', 'Marketing', 'Operação', 'Outros']
 export const CATEGORIES_RECEITA = ['Lote 1 (promo)', 'Lote 2', 'Lote 3', 'Porta', 'Outros']
+
+/* ----------------- Bar / drinks ----------------- */
+// Valores por drink (preco e custo sao por unidade; qtd = vendas esperadas).
+export const drinkReceita = (d) => (Number(d.sale_price) || 0) * (Number(d.expected_qty) || 0)
+export const drinkCusto = (d) => (Number(d.unit_cost) || 0) * (Number(d.expected_qty) || 0)
+export const drinkLucro = (d) => drinkReceita(d) - drinkCusto(d)
+// Margem unitaria sobre o preco de venda (markup do bar).
+export const drinkMargemPct = (d) => {
+  const p = Number(d.sale_price) || 0
+  const c = Number(d.unit_cost) || 0
+  return p > 0 ? ((p - c) / p) * 100 : 0
+}
+
+// Compara os dois modelos de receita usando as metricas ja calculadas,
+// o cardapio de drinks e os 3 parametros de planejamento (em settings).
+//   A = All-inclusive (empresa de open bar)
+//   B = Entrada + Bar (vocCs operam, comprando insumos + barman)
+export function computeBarComparison(m, drinks = [], settings = {}) {
+  const entry = Number(settings.bar_entry_price) || 0
+  const openbar = Number(settings.openbar_company_cost) || 0
+  const barman = Number(settings.bar_barman_cost) || 0
+
+  const barReceita = drinks.reduce((a, d) => a + drinkReceita(d), 0)
+  const barCogs = drinks.reduce((a, d) => a + drinkCusto(d), 0)
+  const qtyTotal = drinks.reduce((a, d) => a + (Number(d.expected_qty) || 0), 0)
+
+  // Base compartilhada = custo previsto atual, como esta (sem subtrair nada).
+  const base = m.custoPrevisto
+  const publico = m.ingressosPrevistos
+
+  const a = {
+    receita: m.receitaPrevista,
+    custo: base + openbar,
+  }
+  a.lucro = a.receita - a.custo
+  a.margem = a.custo > 0 ? (a.lucro / a.custo) * 100 : 0
+
+  const receitaEntrada = entry * publico
+  const b = {
+    receitaEntrada,
+    receitaBar: barReceita,
+    receita: receitaEntrada + barReceita,
+    custo: base + barman + barCogs,
+  }
+  b.lucro = b.receita - b.custo
+  b.margem = b.custo > 0 ? (b.lucro / b.custo) * 100 : 0
+
+  const diff = b.lucro - a.lucro
+  return {
+    a, b, diff,
+    winner: diff > 0 ? 'B' : diff < 0 ? 'A' : 'tie',
+    base, publico, entry, openbar, barman,
+    barReceita, barCogs, qtyTotal,
+    drinksPerPerson: publico > 0 ? qtyTotal / publico : 0,
+  }
+}
